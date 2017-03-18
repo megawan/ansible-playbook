@@ -1,0 +1,15 @@
+---
+- hosts: mercury
+  tasks:
+   - name: install the latest version of Nginx
+     yum:       
+      name: nginx 
+      state: latest
+
+- hosts: mercury
+  tasks:
+   - name: List ansible packages and register result to print with debug later.
+     yum:
+      list: ansible
+      register: result
+
