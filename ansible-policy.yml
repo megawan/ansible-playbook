@@ -1,0 +1,112 @@
+---
+- hosts: staging
+
+  tasks:
+    - name: Setup Password Policy (pass max days)
+      lineinfile: dest=/etc/login.defs
+                  regexp="^PASS_MAX_DAYS"
+                  line="PASS_MAX_DAYS 90"
+                  state=present
+
+     - name: Setup Password Policy (pass min days)
+      lineinfile: dest=/etc/login.defs
+                  regexp="^PASS_MIN_DAYS"
+                  line="PASS_MIN_DAYS 7"
+                  state=present                 
+
+     - name: Setup Password Policy (pass length days)
+      lineinfile: dest=/etc/login.defs
+                  regexp="^PASS_MIN_LEN"
+                  line="PASS_MIN_LEN 5"
+                  state=present 
+
+     - name: Setup Password Policy (pass warn days)
+      lineinfile: dest=/etc/login.defs
+                  regexp="^PASS_WARN_LEN"
+                  line="PASS_WARN_LEN 7"
+                  state=present 
+
+     - name: Setup Password Policy (pam_cracklib.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  regexp="^password    requisite     pam_cracklib.so try_first_pass retry=3 type="
+                  line="password    requisite     pam_cracklib.so try_first_pass retry=3 minlen=8 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1"
+                  state=present 
+
+     - name: Setup Password Policy (pam_unix.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  regexp="^password    sufficient    pam_unix.so"
+                  line="password    requisite     pam_unix.so remember=5 sha512"
+                  state=present
+
+     - name: Setup Password Policy (pam_faillock.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  insertafter="^auth        required   pam_deny.so"
+                  line="auth        required   pam_faillock.so preauth audit silent deny=3 unlock_time=900"
+                  state=present                
+
+     - name: Setup Password Policy (pam.unix.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  insertafter="^auth        required   pam_unix.so"
+                  line="auth        [success=1 default=bad]   pam_unix.so"
+                  state=present
+
+     - name: Setup Password Policy (pam.faillock.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  insertafter="^auth        required   pam_faillock.so"
+                  line="auth        [default=die]   pam_faillock.so authfail audit deny=5 unlock_time=900"
+                  state=present
+
+     - name: Setup Password Policy (pam.faillock.so)
+      lineinfile: dest=/etc/pam.d/password-auth
+                  insertafter="^auth        required   pam_faillock.so"
+                  line="auth        sufficient   pam_faillock.so authsucc audit deny=5 unlock_time=900"
+                  state=present
+
+     - name: Setup Password Policy (pam_cracklib.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  regex="^password    requisite     pam_cracklib.so"
+                  line="password    requisite     pam_cracklib.so try_first_pass retry=3 minlen=8 dcredit=-1 ucredit=-1 ocredit=-1 lcredit=-1"
+                  state=present
+
+     - name: Setup Password Policy (pam_unix.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  regex="^password    sufficient    pam_unix.so"
+                  line="password    requisite     password sufficient pam_unix.so remember=5 sha512"
+                  state=present
+                  
+     - name: Setup Password Policy (pam_faillock.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  insertafter="^auth        required    pam_deny.so"
+                  line="auth    required     pam_faillock.so preauth audit silent deny=3 unlock_time=900"  
+                  state=present
+
+     - name: Setup Password Policy (pam_unix.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  insertafter="^auth        required    pam_deny.so"
+                  line="auth    [success=1 default=bad]     pam_unix.so"
+                  state=present
+
+     - name: Setup Password Policy (pam_faillock.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  insertafter="^auth        required    pam_deny.so"
+                  line="auth    [default=die]     pam_faillock.so authfail audit deny=5 unlock_time=900"
+                  state=present
+
+
+     - name: Setup Password Policy (pam_faillock.so)
+      lineinfile: dest=/etc/pam.d/system-auth
+                  insertafter="^auth        required    pam_deny.so"
+                  line="auth    sufficient     pam_faillock.so authsucc audit deny=5 unlock_time=900"
+                  state=present
+
+     - name: copy file snmp.conf file
+       - copy:
+          src: /etc/snmp/snmp.conf
+          dest: /etc/snmp/snmp.conf-bak
+
+     - name: change public to truemoney in snmp.conf
+      lineinfile: dest=/etc/snmp/snmp.conf
+                  regex="^public"
+                  line="truemoney"
+                  state=present
+      notify: Restart snmp           
