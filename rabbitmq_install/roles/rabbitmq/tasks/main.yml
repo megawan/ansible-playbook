@@ -1,0 +1,43 @@
+---
+- name: Install necessary packages
+  apt:
+    name:
+      - wget
+      - apt-transport-https
+    state: present
+
+- name: Install RabbitMQ repository signing key
+  ansible.builtin.apt_key:
+    url: https://www.rabbitmq.com/rabbitmq-release-signing-key.asc
+    state: present
+
+- name: Add the RabbitMQ repository
+  ansible.builtin.lineinfile:
+    path: /etc/apt/sources.list.d/rabbitmq.list
+    line: deb https://dl.bintray.com/rabbitmq-erlang/debian focal erlang-22.x
+    create: yes
+
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install RabbitMQ server
+  apt:
+    name: rabbitmq-server
+    state: present
+    fix_missing: yes
+
+- name: Check status of the RabbitMQ service
+  systemd:
+    name: rabbitmq-server
+    state: started
+    enabled: yes
+
+- name: Enable RabbitMQ Management Dashboard
+  command: rabbitmq-plugins enable rabbitmq_management
+
+- name: Add admin user
+  command: rabbitmqctl add_user admin "{{ admin_password }}"
+
+- name: Set admin user tags
+  command: rabbitmqctl set_user_tags admin administrator
